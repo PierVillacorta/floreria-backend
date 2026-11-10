@@ -1,0 +1,36 @@
+package cl.floreria.floreria_api.entity;
+
+import jakarta.persistence.*;
+
+
+@Entity
+@Table(name = "categories")
+public class Category {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
+    private Long id;
+
+    @Column(name = "category_name", nullable = false, unique = true, length = 100)
+    private String name;
+
+    protected Category() {
+    }
+
+    public Category(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}

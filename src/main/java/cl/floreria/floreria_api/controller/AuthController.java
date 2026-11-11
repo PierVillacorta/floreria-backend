@@ -36,4 +36,12 @@ public class AuthController {
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
+
+    @PostMapping("/google")
+    @Operation(summary = "Inicia sesión con una cuenta de Google")
+    @ApiResponse(responseCode = "401", description = "Token de Google inválido o cuenta inactiva")
+    @ApiResponse(responseCode = "409", description = "Ese correo ya tiene una cuenta con contraseña")
+    public LoginResponse google(@Valid @RequestBody GoogleLoginRequest request) {
+    return authService.loginWithGoogle(request);
+}
 }

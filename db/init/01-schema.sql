@@ -1,26 +1,27 @@
 -- =====================================================
 -- FLORERIA - esquema + datos iniciales (PostgreSQL)
--- Docker ejecuta este archivo UNA sola vez: cuando el volumen de datos
--- se crea por primera vez.
 -- =====================================================
- 
--- Catalogo de tipos de usuario
+
+-- 1) Catalogo de tipos de usuario
 CREATE TABLE user_types (
     user_type_id  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     type_name     VARCHAR(30) NOT NULL UNIQUE
 );
- 
--- Usuarios 
+
+-- 2) Usuarios 
 CREATE TABLE users (
     user_id        BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     full_name      VARCHAR(100) NOT NULL,
     last_name      VARCHAR(100),
-    run            VARCHAR(9),
+    run            VARCHAR(9) UNIQUE,
     email          VARCHAR(150) NOT NULL UNIQUE,
-    password_hash  VARCHAR(255) NOT NULL,
+    password_hash  VARCHAR(255),  -- NULL en cuentas creadas con Google
     user_type_id   BIGINT NOT NULL REFERENCES user_types (user_type_id),
     account_status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE'
                        CHECK (account_status IN ('ACTIVE', 'INACTIVE')),
+    auth_provider  VARCHAR(10) NOT NULL DEFAULT 'LOCAL'
+                       CHECK (auth_provider IN ('LOCAL', 'GOOGLE')),
+    google_sub     VARCHAR(255) UNIQUE,  -- id estable de la cuenta de Google
     birth_date     DATE,
     address        VARCHAR(300),
     region         VARCHAR(100),
@@ -28,14 +29,14 @@ CREATE TABLE users (
     phone          VARCHAR(15),
     created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
- 
+
 -- 3) Categorias
 CREATE TABLE categories (
     category_id    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     category_name  VARCHAR(100) NOT NULL UNIQUE
 );
- 
---  Productos 
+
+-- 4) Productos 
 CREATE TABLE products (
     product_id     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_code   VARCHAR(50) NOT NULL UNIQUE CHECK (char_length(product_code) >= 3),
@@ -48,8 +49,8 @@ CREATE TABLE products (
     critical_stock INTEGER NOT NULL DEFAULT 0 CHECK (critical_stock >= 0),
     created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
- 
---  Items de carrito (hoy el carrito vive en el frontend, queda para uso futuro)
+
+-- 5) Items de carrito 
 CREATE TABLE cart_items (
     cart_item_id   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id        BIGINT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
@@ -57,20 +58,20 @@ CREATE TABLE cart_items (
     quantity       INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
     UNIQUE (user_id, product_id)
 );
- 
+
 -- =====================================================
 -- DATOS INICIALES
 -- =====================================================
- 
+
 INSERT INTO user_types (type_name) VALUES ('ADMIN'), ('SELLER'), ('CUSTOMER');
- 
+
 INSERT INTO categories (category_name) VALUES
     ('Ramos'),
     ('Flores de temporada'),
     ('Flores exóticas'),
     ('Ramo de flores');
- 
--- La categoria se resuelve por nombre (JOIN), asi no dependemos de ID fijos
+
+
 INSERT INTO products (product_code, product_name, image_url, stock, price, description, category_id, critical_stock)
 SELECT v.product_code, v.product_name, v.image_url, v.stock, v.price, v.description, c.category_id, v.critical_stock
 FROM (VALUES

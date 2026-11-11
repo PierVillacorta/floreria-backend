@@ -26,8 +26,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "auth_provider", nullable = false, length = 10)
+    private String authProvider;
+
+    @Column(name = "google_sub", unique = true)
+    private String googleSub;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_type_id", nullable = false)
@@ -73,6 +79,19 @@ public class User {
         this.address = address;
         this.region = region;
         this.commune = commune;
+        this.authProvider = "LOCAL";
+        this.accountStatus = "ACTIVE";
+    }
+
+    public static User fromGoogle(String fullName, String email, String googleSub, UserType userType) {
+        User user = new User();
+        user.fullName = fullName;
+        user.email = email;
+        user.googleSub = googleSub;
+        user.userType = userType;
+        user.accountStatus = "ACTIVE";
+        user.authProvider = "GOOGLE";
+        return user;
     }
 
     public Long getId() { return id; }

@@ -15,6 +15,7 @@ import cl.floreria.floreria_api.entity.UserType;
 import cl.floreria.floreria_api.exception.BadRequestException;
 import cl.floreria.floreria_api.exception.ConflictException;
 import cl.floreria.floreria_api.exception.NotFoundException;
+import cl.floreria.floreria_api.repository.OrderRepository;
 import cl.floreria.floreria_api.repository.UserRepository;
 import cl.floreria.floreria_api.repository.UserTypeRepository;
 
@@ -24,13 +25,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserTypeRepository userTypeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OrderRepository  orderRepository;
 
     public UserService(UserRepository userRepository,
                        UserTypeRepository userTypeRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                        OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.userTypeRepository = userTypeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.orderRepository = orderRepository;
     }
 
     @Transactional(readOnly = true)
@@ -78,13 +82,17 @@ public class UserService {
 
     @Transactional
     public void delete(Long id, Long currentUserId) {
-        if (id.equals(currentUserId)) {
-            throw new ConflictException("No puedes eliminar tu propia cuenta");
-        }
-        if (!userRepository.existsById(id)) {
-            throw new NotFoundException("Usuario no encontrado");
-        }
-        userRepository.deleteById(id);
+    if (id.equals(currentUserId)) {
+        throw new ConflictException("No puedes eliminar tu propia cuenta");
+    }
+    if (!userRepository.existsById(id)) {
+        throw new NotFoundException("Usuario no encontrado");
+    }
+    if (orderRepository.existsByUserId(id)) {
+        throw new ConflictException(
+                "No se puede eliminar: el usuario tiene compras registradas. Puedes desactivarlo en su lugar");
+    }
+    userRepository.deleteById(id);
     }
 
     private UserType findType(String name) {

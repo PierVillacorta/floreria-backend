@@ -63,6 +63,12 @@ public class Product {
         this.category = category;
         this.criticalStock = criticalStock;
     }
+    public void decreaseStock(int quantity) {
+    if (quantity > stock) {
+        throw new IllegalStateException("Stock insuficiente");
+    }
+    this.stock -= quantity;
+}
 
     public Long getId() { return id; }
     public String getCode() { return code; }

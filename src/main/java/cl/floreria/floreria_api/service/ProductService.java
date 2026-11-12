@@ -12,6 +12,7 @@ import cl.floreria.floreria_api.entity.Product;
 import cl.floreria.floreria_api.exception.BadRequestException;
 import cl.floreria.floreria_api.exception.NotFoundException;
 import cl.floreria.floreria_api.repository.CategoryRepository;
+import cl.floreria.floreria_api.repository.OrderItemRepository;
 import cl.floreria.floreria_api.repository.ProductRepository;
 
 @Service
@@ -19,11 +20,14 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public ProductService(ProductRepository productRepository,
-                          CategoryRepository categoryRepository) {
+                          CategoryRepository categoryRepository,
+                          OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @Transactional(readOnly = true)
@@ -86,10 +90,13 @@ public class ProductService {
 
     @Transactional
     public void delete(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new NotFoundException("Producto no encontrado");
-        }
-        productRepository.deleteById(id);
+    if (!productRepository.existsById(id)) {
+        throw new NotFoundException("Producto no encontrado");
+    }
+    if (orderItemRepository.existsByProductId(id)) {
+        throw new ConflictException("No se puede eliminar: el producto tiene ventas registradas");
+    }
+    productRepository.deleteById(id);
     }
 
     private Category findCategory(Long categoryId) {
